@@ -154,3 +154,117 @@ if (heroSlider) {
   showSlide(0);
   startHeroAutoplay();
 }
+
+const imageLightbox = document.getElementById('imageLightbox');
+
+if (imageLightbox) {
+  const lightboxImage = imageLightbox.querySelector(
+    '.image-lightbox-content img'
+  );
+
+  const lightboxCaption = imageLightbox.querySelector(
+    '.image-lightbox-caption'
+  );
+
+  const lightboxClose = imageLightbox.querySelector(
+    '.image-lightbox-close'
+  );
+
+  const articleImageSelector = [
+    '.story-details .article-feature-image img',
+    '.story-details .article-image-card img',
+    '.story-details .aside-feature-image img'
+  ].join(', ');
+
+  let previouslyFocusedElement = null;
+
+  function openImageLightbox(image) {
+    const figure = image.closest('figure');
+    const caption = figure
+      ?.querySelector('figcaption')
+      ?.textContent
+      .trim();
+
+    previouslyFocusedElement = document.activeElement;
+
+    lightboxImage.src = image.currentSrc || image.src;
+    lightboxImage.alt = image.alt || 'Expanded article image';
+    lightboxCaption.textContent = caption || '';
+
+    imageLightbox.classList.add('is-open');
+    imageLightbox.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('lightbox-open');
+
+    lightboxClose.focus();
+  }
+
+  function closeImageLightbox() {
+    imageLightbox.classList.remove('is-open');
+    imageLightbox.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('lightbox-open');
+
+    lightboxImage.src = '';
+    lightboxCaption.textContent = '';
+
+    previouslyFocusedElement?.focus();
+  }
+
+  /* Open article images */
+  document.addEventListener('click', (event) => {
+    const clickedImage = event.target.closest(articleImageSelector);
+
+    if (!clickedImage) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    openImageLightbox(clickedImage);
+  });
+
+  /* Stop every click inside the modal reaching the article script */
+  imageLightbox.addEventListener('click', (event) => {
+    event.stopPropagation();
+
+    /* Close only when the dark background itself is clicked */
+    if (event.target === imageLightbox) {
+      closeImageLightbox();
+    }
+  });
+
+  /* Dedicated close-button listener */
+  lightboxClose.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    closeImageLightbox();
+  });
+
+  /* Clicking the enlarged image does nothing */
+  lightboxImage.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+  });
+
+  /*
+   * Capture Escape before the article's keyboard listener receives it.
+   * This closes only the lightbox and leaves the article open.
+   */
+  document.addEventListener(
+    'keydown',
+    (event) => {
+      if (
+        event.key !== 'Escape' ||
+        !imageLightbox.classList.contains('is-open')
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+
+      closeImageLightbox();
+    },
+    true
+  );
+}
